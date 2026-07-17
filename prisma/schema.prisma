@@ -1,0 +1,233 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   Int                   @id @default(autoincrement())
+  loginId              String                @unique @db.VarChar(255)
+  password             String                @db.VarChar(255)
+  role                 Role
+  name                 String                @db.VarChar(255)
+  department           String                @db.VarChar(255)
+  email                String?               @db.VarChar(255)
+  erpId                String?               @unique @db.VarChar(50)
+  weeklyReportEmail    Boolean?              @default(false)
+  notificationEmail    Boolean?              @default(true)
+  preferredLanguage    String?               @default("ko") @db.VarChar(10)
+  timezone             String?               @default("Asia/Seoul") @db.VarChar(50)
+  createdAt            DateTime?             @default(now()) @db.Timestamp(6)
+  updatedAt            DateTime?             @default(now()) @updatedAt @db.Timestamp(6)
+  cars                 CAR[]                 @relation("CreatedCars")
+  carInternalContacts  CarInternalContact[]
+  carActivityLogs      CarActivityLog[]
+  notifications        Notification[]
+
+  @@index([loginId], map: "idx_user_loginid")
+  @@index([role], map: "idx_user_role")
+  @@index([erpId], map: "idx_user_erpid")
+}
+
+model CAR {
+  id                  Int                  @id @default(autoincrement())
+  corporation         String
+  eventType           EventType
+  issueDate           BigInt
+  dueDate             BigInt?
+  importance          Decimal              @db.Decimal(10, 2)
+  internalContact     String?
+  receptionChannel    String?
+  mainCategory        String?
+  openIssue           String?
+  followUpPlan        String?
+  completionDate      BigInt?
+  internalScore       Decimal?             @db.Decimal(5, 2)
+  customerScore       Decimal?             @db.Decimal(5, 2)
+  subjectiveScore     Decimal?             @db.Decimal(5, 2)
+  score               Decimal?             @db.Decimal(5, 2)
+  sentimentScore      Decimal?             @db.Decimal(5, 2)
+  aiKeywords          String?
+  riskMitigation      Boolean?             @default(false)
+  riskDescription     String?
+  riskLevel           String?              @default("MEDIUM")
+  createdAt           DateTime?            @default(now()) @db.Timestamp(6)
+  updatedAt           DateTime?            @default(now()) @updatedAt @db.Timestamp(6)
+  createdBy           Int
+  creator             User                 @relation("CreatedCars", fields: [createdBy], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_car_user")
+  carCustomerContacts  CarCustomerContact[]
+  carInternalContacts  CarInternalContact[]
+  scoreHistories       ScoreHistory[]
+  activityLogs         CarActivityLog[]
+  notifications        Notification[]
+
+  @@index([corporation], map: "idx_car_corporation")
+  @@index([createdBy], map: "idx_car_createdby")
+  @@index([eventType], map: "idx_car_eventtype")
+  @@index([importance], map: "idx_car_importance")
+  @@index([issueDate], map: "idx_car_issuedate")
+  @@index([riskMitigation], map: "idx_car_riskmitigation")
+}
+
+model ScoreHistory {
+  id        Int       @id @default(autoincrement())
+  carId     Int
+  scoreType String    @db.VarChar(50)
+  value     Decimal   @db.Decimal(5, 2)
+  createdAt DateTime? @default(now()) @db.Timestamp(6)
+  car       CAR       @relation(fields: [carId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_scorehistory_car")
+
+  @@index([carId], map: "idx_scorehistory_carid")
+  @@index([createdAt], map: "idx_scorehistory_createdat")
+}
+
+model WeeklyReport {
+  id        Int       @id @default(autoincrement())
+  title     String?
+  weekStart DateTime  @db.Timestamp(6)
+  data      Json
+  createdAt DateTime? @default(now()) @db.Timestamp(6)
+  updatedAt DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+
+  @@index([createdAt], map: "idx_weeklyreport_createdat")
+  @@index([weekStart], map: "idx_weeklyreport_weekstart")
+}
+
+model managementEmail {
+  id    Int    @id @default(autoincrement())
+  email String @unique @db.VarChar(255)
+}
+
+model CustomerContact {
+  id                  Int                  @id @default(autoincrement())
+  name                String
+  group               String
+  company             String?
+  department          String
+  phone               String
+  memo                String?
+  createdAt           DateTime?            @default(now()) @db.Timestamp(6)
+  email               String?
+  carCustomerContacts CarCustomerContact[]
+}
+
+model CarCustomerContact {
+  carId             Int
+  customerContactId Int
+  CAR               CAR             @relation(fields: [carId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_carcustomercontact_car")
+  CustomerContact   CustomerContact @relation(fields: [customerContactId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_carcustomercontact_customer")
+
+  @@id([carId, customerContactId])
+  @@index([carId], map: "idx_carcustomercontact_carid")
+  @@index([customerContactId], map: "idx_carcustomercontact_customerid")
+}
+
+model CarInternalContact {
+  carId  Int
+  userId Int
+  car    CAR  @relation(fields: [carId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_carinternalcontact_car")
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_carinternalcontact_user")
+
+  @@id([carId, userId])
+  @@index([carId], map: "idx_carinternalcontact_carid")
+  @@index([userId], map: "idx_carinternalcontact_userid")
+}
+
+model CorporationSettings {
+  id               Int       @id @default(autoincrement())
+  corporation      String    @unique
+  defaultLanguage  String?   @default("ko")
+  timezone         String?   @default("Asia/Seoul")
+  enforceLanguage  Boolean?  @default(false)
+  allowedLanguages String?   @default("ko,en")
+  createdAt        DateTime? @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+
+  @@index([corporation], map: "idx_corporationsettings_corporation")
+}
+
+model emp_m {
+  emp_id         String    @id @db.VarChar(50)
+  emp_nm         String?   @db.VarChar(100)
+  pw             String?   @db.VarChar(256)
+  cmpy_cd        String?   @db.VarChar(30)
+  cmpy_nm        String?   @db.VarChar(100)
+  dept_cd        String?   @db.VarChar(30)
+  dept_nm        String?   @db.VarChar(100)
+  emp_no         String?   @db.VarChar(20)
+  moblep_no      String?   @db.VarChar(20)
+  email          String?   @db.VarChar(200)
+  entrcm_da      String?   @db.VarChar(10)
+  retire_da      String?   @db.VarChar(10)
+  emp_status_cd  String?   @db.VarChar(50)
+  login_fail_cnt Int?
+  otp            String?   @db.VarChar(20)
+  otp_reg_dt     DateTime? @db.Timestamptz(6)
+  reg_usr_id     String?   @db.VarChar(50)
+  reg_dt         DateTime? @db.Timestamptz(6)
+  upd_usr_id     String?   @db.VarChar(50)
+  upd_dt         DateTime? @db.Timestamptz(6)
+}
+
+model CarActivityLog {
+  id            Int       @id @default(autoincrement())
+  carId         Int
+  userId        Int?
+  activityType  String    @db.VarChar(50)
+  changedField  String?   @db.VarChar(100)
+  oldValue      String?
+  newValue      String?
+  summary       String?
+  createdAt     DateTime? @default(now()) @db.Timestamp(6)
+  car           CAR       @relation(fields: [carId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_caractivitylog_car")
+  user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_caractivitylog_user")
+
+  @@index([carId], map: "idx_caractivitylog_carid")
+  @@index([userId], map: "idx_caractivitylog_userid")
+  @@index([createdAt], map: "idx_caractivitylog_createdat")
+  @@index([activityType], map: "idx_caractivitylog_activitytype")
+}
+
+model Notification {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  carId      Int?
+  type       String    @db.VarChar(50)
+  title      String    @db.VarChar(255)
+  message    String
+  isRead     Boolean   @default(false)
+  readAt     DateTime? @db.Timestamp(6)
+  emailSent  Boolean   @default(false)
+  emailSentAt DateTime? @db.Timestamp(6)
+  createdAt  DateTime? @default(now()) @db.Timestamp(6)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_notification_user")
+  car        CAR?      @relation(fields: [carId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_notification_car")
+
+  @@index([userId], map: "idx_notification_userid")
+  @@index([carId], map: "idx_notification_carid")
+  @@index([isRead], map: "idx_notification_isread")
+  @@index([createdAt], map: "idx_notification_createdat")
+  @@index([type], map: "idx_notification_type")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  STAFF
+  INACTIVE
+}
+
+enum EventType {
+  ONE_TIME
+  CONTINUOUS
+}
+
+enum ReceptionChannel {
+  EMAIL
+  CALL
+  VISIT
+  OTHER
+}

@@ -1,0 +1,39 @@
+{
+  "devDependencies": {
+    "@playwright/test": "^1.53.0",
+    "@types/node": "^24.0.1",
+    "cross-env": "^7.0.3",
+    "playwright": "^1.53.0",
+    "prisma": "^6.9.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.9.0",
+    "bcrypt": "^6.0.0",
+    "chart.js": "^4.4.9",
+    "cors": "^2.8.5",
+    "csv-parse": "^5.6.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "kafkajs": "^2.2.4",
+    "node-cron": "^3.0.3",
+    "pg": "^8.13.1",
+    "react-chartjs-2": "^5.3.0",
+    "uuid": "^13.0.0"
+  },
+  "name": "car-system",
+  "version": "2.5.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  }
+}
