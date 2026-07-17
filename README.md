@@ -14,6 +14,12 @@
 
 > ⚠️ 이 저장소는 **포트폴리오용 공개본**입니다. 실제 사내 운영 코드에서 회사 식별자·크리덴셜·내부 호스트를 전부 가상 값(`Comad`/`ccar.internal`)으로 치환했으며, 데이터는 모두 더미입니다.
 
+![Dashboard](docs/screenshots/dashboard.png)
+
+| VOC 목록 (법인·상태·리스크 필터) | 리스크 대시보드 (법인별 Gantt) |
+|---|---|
+| ![CAR List](docs/screenshots/car-list.png) | ![Risk Dashboard](docs/screenshots/risk-dashboard.png) |
+
 ---
 
 ## 무엇을 해결했나
@@ -73,10 +79,10 @@
 docker compose up -d
 
 # 2. Backend (포트 4000)
-cp .env.example .env
+cp .env.example .env        # 호스트에 Postgres가 이미 있다면 URL의 포트만 바꾸세요
 npm install
-npx prisma migrate deploy   # 또는 npx prisma db push
-npm run seed                # 더미 계정: admin / admin123
+npx prisma migrate deploy
+npm run seed                # 데모 계정·법인·VOC 12건 생성 (admin / admin123)
 npm start
 
 # 3. Frontend (포트 41000)
